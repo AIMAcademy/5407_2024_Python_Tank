@@ -33,6 +33,7 @@ class robot(wpilib.TimedRobot):
         self.PickAndFiringArmMotor = rev.CANSparkMax(PickupAndFiringArmMotorPort, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
         self.ShootingMechansimMotor1 = rev.CANSparkMax(ShootingMechansimMotorPort1, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
         self.ShootingMechansimMotor2 = rev.CANSparkMax(ShootingMechansimMotorPort2, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.ShootingMechansimMotorControlGroup = wpilib.MotorControllerGroup(self.ShootingMechansimMotor1, self.ShootingMechansimMotor2)
         self.drive = wpilib.drive.DifferentialDrive(self.DriveLeftMotorControlGroup, self.DriveRightMotorControlGroup)
 #Extra Components
         self.AbsolutEncoder = placeholder
@@ -40,7 +41,7 @@ class robot(wpilib.TimedRobot):
         self.IRDetector2 = placeholder
         self.TurnRatio = placeholder
         self.GrabChainState = False
-        self.NotePickUpState = False
+        self.CarryingNote = False
         self.StableNote = False
         self.kNoteAdjustmentForward = 0.01
         self.kNoteAdjustmentBackward = -0.01
@@ -75,13 +76,13 @@ class robot(wpilib.TimedRobot):
             self.GrabChainState = True
 #Intake
         if self.IRDetector1 == True or self.IRDetector2 == True:
-            self.NotePickUpState = True
+            self.CarryingNote = True
         else:
-            self.NotePickUpState = False
+            self.CarryingNote = False
             #add timer to make it wait then run the check again then set state false
-        if self.NotePickUpState == False:
+        if self.CarryingNote == False:
             self.PickupMechansimMotor.set(self.XboxLeftTrigger)
-        elif self.NotePickUpState == True:
+        elif self.CarryingNote == True:
             if self.IRDetector1 == True and self.IRDetector2 == True:
                 self.StableNote = True
             else:
@@ -92,7 +93,7 @@ class robot(wpilib.TimedRobot):
             else:
                 self.PickupMechansimMotor.set(self.kNoteAdjustmentBackward)
 #Intake Arm
-        if self.NotePickUpState == False:
+        if self.CarryingNote == False:
             self.Error = self.PickUpZone - self.AbsolutEncoder
             #add pid controller for motor set value
             self.PickAndFiringArmMotor.set(placeholder)
@@ -100,6 +101,10 @@ class robot(wpilib.TimedRobot):
             self.Error = self.ShootZone - self.AbsolutEncoder
             #add pid controller for motor set value
             self.PickAndFiringArmMotor.set(placeholder)
-
+#Shooting
+        if self.StableNote == True and self.AbsolutEncoder == self.ShootZone:
+            self.PickupMechansimMotor.set(-self.XboxRightTrigger)
+            self.ShootingMechansimMotorControlGroup.set(self.XboxRightTrigger)
 if __name__ == "__main__":
     wpilib.run(robot)
+    
