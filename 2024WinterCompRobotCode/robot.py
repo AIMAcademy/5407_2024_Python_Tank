@@ -22,29 +22,38 @@ XboxControlerPort = placeholder
 class robot(wpilib.TimedRobot):
     def robotInit(self):
 
-#Motors can be listed here, for any new motors make sure to add them to the appropriate motor group side
+#Motors + WPILIB drive
         self.DriveLeftMotor = rev.CANSparkMax(DriveLeftMotorPort1, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
         self.DriveRightMotor = rev.CANSparkMax(DriveRightMotorPort1, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
         self.DriveLeftMotor2= rev.CANSparkMax(DriveLeftMotorPort2, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
         self.DriveRightMotor2 = rev.CANSparkMax(DriveRightMotorPort2, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
         self.DriveLeftMotorControlGroup = wpilib.MotorControllerGroup(self.DriveLeftMotor, self.DriveLeftMotor2) 
         self.DriveRightMotorControlGroup = wpilib.MotorControllerGroup(self.DriveRightMotor, self.DriveRightMotor2)
-        #self.PickupMechansimMotor = rev.CANSparkMax(PickupMechansimMotorPort, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
-        #self.PickAndFiringArmMotor = rev.CANSparkMax(PickupAndFiringArmMotorPort, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
-        #self.ShootingMechansimMotor1 = rev.CANSparkMax(ShootingMechansimMotorPort1, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
-        #self.ShootingMechansimMotor2 = rev.CANSparkMax(ShootingMechansimMotorPort2, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
-        #self.AbsolutEncoder = 1
+        self.PickupMechansimMotor = rev.CANSparkMax(PickupMechansimMotorPort, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.PickAndFiringArmMotor = rev.CANSparkMax(PickupAndFiringArmMotorPort, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.ShootingMechansimMotor1 = rev.CANSparkMax(ShootingMechansimMotorPort1, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.ShootingMechansimMotor2 = rev.CANSparkMax(ShootingMechansimMotorPort2, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
         self.drive = wpilib.drive.DifferentialDrive(self.DriveLeftMotorControlGroup, self.DriveRightMotorControlGroup)
-
+#Extra Components
+        self.AbsolutEncoder = placeholder
+        self.IRDetector1 = placeholder
+        self.IRDetector2 = placeholder
         self.TurnRatio = placeholder
+        self.GrabChainState = False
+        self.NotePickUpState = False
+        self.StableNote = False
+        self.kNoteAdjustmentForward = 0.01
+        self.kNoteAdjustmentBackward = -0.01
+        self.Error = 0 
+        self.PickUpZone = placeholder
+        self.ShootZone = placeholder
 
+#Controller Inputs
         self.Controler = wpilib.XboxController(XboxControlerPort)
-
-
-        self.XboxAButton = wpilib.XboxController.getAButton(self.Controler)
-        self.XboxBButton = wpilib.XboxController.getBButton(self.Controler)
-        self.XboxXButton = wpilib.XboxController.getXButton(self.Controler)
-        self.XboxYButton = wpilib.XboxController.getYButton(self.Controler)
+        self.XboxRightTrigger = wpilib.XboxController.getRightTriggerAxis(self.Controler)
+        self.XboxLeftTrigger = wpilib.XboxController.getLeftTriggerAxis(self.Controler)
+        self.XboxRightBumper = wpilib.XboxController.getRightBumper(self.Controler)
+        self.XboxLeftBumper = wpilib.XboxController.getRightBumper(self.Controler)
         self.XboxLeftJoyStickY = self.Controler.getLeftY()
         self.XboxLeftJoyStickX = self.Controler.getLeftX()
         self.XboxRightJoyStickY = self.Controler.getRightY()
@@ -57,11 +66,40 @@ class robot(wpilib.TimedRobot):
         self.drive.stopMotor()
 
     def teleopPeriodic(self):
-
+#Drive
         self.drive.tankDrive(
                  (self.XboxLeftJoyStickY + (self.XboxLeftJoyStickX * self.TurnRatio)),
                  (self.XboxLeftJoyStickY - (self.XboxLeftJoyStickX * self.TurnRatio)) )
+#Chain Grab
+        if self.XboxRightBumper == True and self.XboxLeftBumper == True:
+            self.GrabChainState = True
+#Intake
+        if self.IRDetector1 == True or self.IRDetector2 == True:
+            self.NotePickUpState = True
+        else:
+            self.NotePickUpState = False
+            #add timer to make it wait then run the check again then set state false
+        if self.NotePickUpState == False:
+            self.PickupMechansimMotor.set(self.XboxLeftTrigger)
+        elif self.NotePickUpState == True:
+            if self.IRDetector1 == True and self.IRDetector2 == True:
+                self.StableNote = True
+            else:
+                self.StableNote = False
+        if self.StableNote == False:
+            if self.IRDetector1 == False:
+                self.PickupMechansimMotor.set(self.kNoteAdjustmentForward)
+            else:
+                self.PickupMechansimMotor.set(self.kNoteAdjustmentBackward)
+#Intake Arm
+        if self.NotePickUpState == False:
+            self.Error = self.PickUpZone - self.AbsolutEncoder
+            #add pid controller for motor set value
+            self.PickAndFiringArmMotor.set(placeholder)
+        else:
+            self.Error = self.ShootZone - self.AbsolutEncoder
+            #add pid controller for motor set value
+            self.PickAndFiringArmMotor.set(placeholder)
 
 if __name__ == "__main__":
     wpilib.run(robot)
-
