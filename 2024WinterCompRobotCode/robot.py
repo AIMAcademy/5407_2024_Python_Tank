@@ -8,6 +8,7 @@ import wpilib.interfaces
 import wpilib.event
 from wpilib.drive import DifferentialDrive
 
+
 #ports
 placeholder = 1
 DriveLeftMotorPort1 = placeholder
@@ -31,12 +32,10 @@ class robot(wpilib.TimedRobot):
         self.DriveRightMotorControlGroup = wpilib.MotorControllerGroup(self.DriveRightMotor, self.DriveRightMotor2)
         self.PickupMechansimMotor = rev.CANSparkMax(PickupMechansimMotorPort, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
         self.PickAndFiringArmMotor = rev.CANSparkMax(PickupAndFiringArmMotorPort, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
-        self.ShootingMechansimMotor1 = rev.CANSparkMax(ShootingMechansimMotorPort1, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
-        self.ShootingMechansimMotor2 = rev.CANSparkMax(ShootingMechansimMotorPort2, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
-        self.ShootingMechansimMotorControlGroup = wpilib.MotorControllerGroup(self.ShootingMechansimMotor1, self.ShootingMechansimMotor2)
+        self.ShootingMechansimMotor = rev.CANSparkMax(ShootingMechansimMotorPort1, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
         self.drive = wpilib.drive.DifferentialDrive(self.DriveLeftMotorControlGroup, self.DriveRightMotorControlGroup)
 #Extra Components
-        self.AbsolutEncoder = placeholder
+        self.AbsolutEncoder = rev.SparkMaxAbsoluteEncoder(rev.CANSparkMax.getAbsoluteEncoder(self.PickAndFiringArmMotor, rev.SparkAbsoluteEncoder.Type.kDutyCycle))
         self.IRDetector1 = placeholder
         self.IRDetector2 = placeholder
         self.TurnRatio = placeholder
@@ -45,10 +44,13 @@ class robot(wpilib.TimedRobot):
         self.StableNote = False
         self.kNoteAdjustmentForward = 0.01
         self.kNoteAdjustmentBackward = -0.01
-        self.Error = 0 
         self.PickUpZone = placeholder
         self.ShootZone = placeholder
-
+        self.Kp = placeholder
+        self.Ki = placeholder
+        self.Kd = placeholder
+        self.PIDControler = 
+        
 #Controller Inputs
         self.Controler = wpilib.XboxController(XboxControlerPort)
         self.XboxRightTrigger = wpilib.XboxController.getRightTriggerAxis(self.Controler)
@@ -95,16 +97,17 @@ class robot(wpilib.TimedRobot):
 #Intake Arm
         if self.CarryingNote == False:
             self.Error = self.PickUpZone - self.AbsolutEncoder
+            
             #add pid controller for motor set value
             self.PickAndFiringArmMotor.set(placeholder)
         else:
-            self.Error = self.ShootZone - self.AbsolutEncoder
+            self.Error = self.ShootZone - self.AbsolutEncoder.getPosition
             #add pid controller for motor set value
             self.PickAndFiringArmMotor.set(placeholder)
 #Shooting
-        if self.StableNote == True and self.AbsolutEncoder == self.ShootZone:
+        if self.StableNote == True and self.AbsolutEncoder.getPosition == self.ShootZone:
             self.PickupMechansimMotor.set(-self.XboxRightTrigger)
-            self.ShootingMechansimMotorControlGroup.set(self.XboxRightTrigger)
+            self.ShootingMechansimMotor.set(self.XboxRightTrigger)
 if __name__ == "__main__":
     wpilib.run(robot)
     
