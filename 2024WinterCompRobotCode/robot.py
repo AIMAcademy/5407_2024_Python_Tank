@@ -7,13 +7,14 @@ import wpilib.drive
 import wpilib.interfaces
 import wpilib.event
 from wpilib.drive import DifferentialDrive
+from wpilib.shuffleboard import Shuffleboard
 
 #ports
-placeholder = 1
-DriveLeftMotorPort1 = 20
-DriveLeftMotorPort2 = 21
-DriveRightMotorPort1 = 22
-DriveRightMotorPort2 = 24
+#placeholder = 1
+DriveLeftMotorPort1 = 23
+DriveLeftMotorPort2 = 22
+DriveRightMotorPort1 = 20
+DriveRightMotorPort2 = 21
 PickupMechansimMotorPort = 1
 #PickupAndFiringArmMotorPort = placeholder
 ShootingMechansimMotorPort1 = 2
@@ -25,7 +26,7 @@ class robot(wpilib.TimedRobot):
 #Motors + WPILIB drive
         self.DriveLeftMotor = rev.CANSparkMax(DriveLeftMotorPort1, rev._rev.CANSparkLowLevel.MotorType.kBrushed)
         self.DriveRightMotor = rev.CANSparkMax(DriveRightMotorPort1, rev._rev.CANSparkLowLevel.MotorType.kBrushed)
-        self.DriveLeftMotor2= rev.CANSparkMax(DriveLeftMotorPort2, rev._rev.CANSparkLowLevel.MotorType.kBrushed)
+        self.DriveLeftMotor2 = rev.CANSparkMax(DriveLeftMotorPort2, rev._rev.CANSparkLowLevel.MotorType.kBrushed)
         self.DriveRightMotor2 = rev.CANSparkMax(DriveRightMotorPort2, rev._rev.CANSparkLowLevel.MotorType.kBrushed)
         self.DriveLeftMotorControlGroup = wpilib.MotorControllerGroup(self.DriveLeftMotor, self.DriveLeftMotor2) 
         self.DriveRightMotorControlGroup = wpilib.MotorControllerGroup(self.DriveRightMotor, self.DriveRightMotor2)
@@ -33,13 +34,15 @@ class robot(wpilib.TimedRobot):
         #self.PickAndFiringArmMotor = rev.CANSparkMax(PickupAndFiringArmMotorPort, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
         self.ShootingMechansimMotor1 = rev.CANSparkMax(ShootingMechansimMotorPort1, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
         self.ShootingMechansimMotor2 = rev.CANSparkMax(ShootingMechansimMotorPort2, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
-        self.ShootingMechansimMotorControlGroup = wpilib.MotorControllerGroup(self.ShootingMechansimMotor1, self.ShootingMechansimMotor2)
+        #self.ShootingMechansimMotorControlGroup = wpilib.MotorControllerGroup(self.ShootingMechansimMotor1, self.ShootingMechansimMotor2)
         self.drive = wpilib.drive.DifferentialDrive(self.DriveLeftMotorControlGroup, self.DriveRightMotorControlGroup)
 #Extra Components
         # self.AbsolutEncoder = placeholder
         # self.IRDetector1 = placeholder
         # self.IRDetector2 = placeholder
         self.TurnRatio = 1
+        self.Toggle = 0
+        self.ToggleRatio = 3/4
         # self.GrabChainState = False
         # self.CarryingNote = False
         # self.StableNote = False
@@ -51,27 +54,47 @@ class robot(wpilib.TimedRobot):
 
 #Controller Inputs
         self.Controler = wpilib.XboxController(XboxControlerPort)
-        self.XboxRightTrigger = wpilib.XboxController.getRightTriggerAxis(self.Controler)
-        self.XboxLeftTrigger = wpilib.XboxController.getLeftTriggerAxis(self.Controler)
-        self.XboxRightBumper = wpilib.XboxController.getRightBumper(self.Controler)
-        self.XboxLeftBumper = wpilib.XboxController.getRightBumper(self.Controler)
-        self.XboxLeftJoyStickY = self.Controler.getLeftY()
-        self.XboxLeftJoyStickX = self.Controler.getLeftX()
-        self.XboxRightJoyStickY = self.Controler.getRightY()
-        self.XboxRightJoyStickX = self.Controler.getRightX()
-
+        #self.XboxRightTrigger = wpilib.XboxController.getRightTriggerAxis(self.Controler)
+        #self.XboxLeftTrigger = wpilib.XboxController.getLeftTriggerAxis(self.Controler)
+        #self.XboxRightBumper = wpilib.XboxController.getRightBumper(self.Controler)
+        #self.XboxLeftBumper = wpilib.XboxController.getRightBumper(self.Controler)
+        #self.XboxA = self.Controler.getAButton()
+        #self.XboxLeftJoyStickY = self.Controler.getLeftY()
+        #self.XboxLeftJoyStickX = self.Controler.getLeftX()
+        #self.XboxLeftJoyStickY = wpilib.XboxController.getLeftY(self.Controler)
+        #self.XboxLeftJoyStickX = wpilib.XboxController.getLeftX(self.Controler)
+        #self.XboxRightJoyStickY = self.Controler.getRightY()
+        #self.XboxRightJoyStickX = self.Controler.getRightX()
     def teleopExit(self):
 
         self.drive.stopMotor()
 
     def teleopPeriodic(self):
+        self.XboxRightBumper = self.Controler.getRightBumperPressed()
+        self.XboxLeftJoyStickY = self.Controler.getLeftY()
+        self.XboxLeftJoyStickX = self.Controler.getLeftX()
+        self.XboxRightJoyStickY = self.Controler.getRightY()
+        if self.XboxRightBumper == True and self.Toggle == 1:
+            self.Toggle = 0
+        elif self.XboxRightBumper == True and self.Toggle == 0:
+            self.Toggle = 1
+
+        print("X ", self.XboxLeftJoyStickX, "Y ", self.XboxLeftJoyStickY, "Right Bumper ", self.XboxRightBumper)
 #Drive
         self.drive.tankDrive(
-                 (self.XboxLeftJoyStickY + (self.XboxLeftJoyStickX * self.TurnRatio)),
-                 (self.XboxLeftJoyStickY - (self.XboxLeftJoyStickX * self.TurnRatio)) )
-        self.PickupMechansimMotor.set(self.XboxRightJoyStickX)
+                 
+                 -self.XboxLeftJoyStickY - self.XboxLeftJoyStickX,
+                 self.XboxLeftJoyStickY - self.XboxLeftJoyStickX, True)
+        self.ShootingMechansimMotor1.set(self.Toggle * self.ToggleRatio)
+        self.ShootingMechansimMotor2.set(-self.Toggle * self.ToggleRatio)
+        self.PickupMechansimMotor.set(self.XboxRightJoyStickY)
+
+        #self.ShootingMechansimMotor1.set(self.Toggle*self.ToggleRatio)
+        #self.ShootingMechansimMotor2.set(self.Toggle*self.ToggleRatio)
+                #0.5, -0.5, True)
+        #self.PickupMechansimMotor.set(self.XboxRightJoyStickX)
         #self.PickAndFiringArmMotor.set(self.XboxRightJoyStickY)
-        self.ShootingMechansimMotorControlGroup.set(self.XboxLeftTrigger)
+        #self.ShootingMechansimMotorControlGroup.set(self.XboxLeftTrigger)
 #Chain Grab
 #         if self.XboxRightBumper == True and self.XboxLeftBumper == True:
 #             self.GrabChainState = True
@@ -108,4 +131,5 @@ class robot(wpilib.TimedRobot):
 #             self.ShootingMechansimMotorControlGroup.set(self.XboxRightTrigger)
 if __name__ == "__main__":
     wpilib.run(robot)
+
 
