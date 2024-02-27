@@ -54,17 +54,18 @@ class robot(wpilib.TimedRobot):
 
 #Controller Inputs
         self.Controler = wpilib.XboxController(XboxControlerPort)
-        #self.XboxRightTrigger = wpilib.XboxController.getRightTriggerAxis(self.Controler)
-        #self.XboxLeftTrigger = wpilib.XboxController.getLeftTriggerAxis(self.Controler)
-        #self.XboxRightBumper = wpilib.XboxController.getRightBumper(self.Controler)
-        #self.XboxLeftBumper = wpilib.XboxController.getRightBumper(self.Controler)
-        #self.XboxA = self.Controler.getAButton()
-        #self.XboxLeftJoyStickY = self.Controler.getLeftY()
-        #self.XboxLeftJoyStickX = self.Controler.getLeftX()
-        #self.XboxLeftJoyStickY = wpilib.XboxController.getLeftY(self.Controler)
-        #self.XboxLeftJoyStickX = wpilib.XboxController.getLeftX(self.Controler)
-        #self.XboxRightJoyStickY = self.Controler.getRightY()
-        #self.XboxRightJoyStickX = self.Controler.getRightX()
+        self.XboxRightTrigger = wpilib.XboxController.getRightTriggerAxis(self.Controler)
+        self.XboxLeftTrigger = wpilib.XboxController.getLeftTriggerAxis(self.Controler)
+        self.XboxRightBumper = wpilib.XboxController.getRightBumper(self.Controler)
+        self.XboxLeftBumper = wpilib.XboxController.getRightBumper(self.Controler)
+        self.XboxA = self.Controler.getAButton()
+        self.XboxB = self.Controler.getBButton()
+        self.XboxLeftJoyStickY = self.Controler.getLeftY()
+        self.XboxLeftJoyStickX = self.Controler.getLeftX()
+        self.XboxLeftJoyStickY = wpilib.XboxController.getLeftY(self.Controler)
+        self.XboxLeftJoyStickX = wpilib.XboxController.getLeftX(self.Controler)
+        self.XboxRightJoyStickY = self.Controler.getRightY()
+        self.XboxRightJoyStickX = self.Controler.getRightX()
     def teleopExit(self):
 
         self.drive.stopMotor()
@@ -86,8 +87,10 @@ class robot(wpilib.TimedRobot):
                  -self.XboxLeftJoyStickY - self.XboxLeftJoyStickX,
                  self.XboxLeftJoyStickY - self.XboxLeftJoyStickX, True)
         self.ShootingMechansimMotor1.set(self.Toggle * self.ToggleRatio)
-        self.ShootingMechansimMotor2.set(-self.Toggle * self.ToggleRatio)
-        self.PickupMechansimMotor.set(self.XboxRightJoyStickY)
+        self.ShootingMechansimMotor2.set(-self.Toggle * self.ToggleRatio) #0.9 was formerly here instead of ToggleRatio
+        self.PickupMechansimMotor.set(self.XboxA or -(self.XboxB)) # this was formerly self.XboxRightJoyStickY
+        self.PickAndFiringArmMotor.set(self.XboxRightJoyStickY) #i took this from commented section below lmao
+        
 
         #self.ShootingMechansimMotor1.set(self.Toggle*self.ToggleRatio)
         #self.ShootingMechansimMotor2.set(self.Toggle*self.ToggleRatio)
@@ -131,5 +134,4 @@ class robot(wpilib.TimedRobot):
 #             self.ShootingMechansimMotorControlGroup.set(self.XboxRightTrigger)
 if __name__ == "__main__":
     wpilib.run(robot)
-
 
