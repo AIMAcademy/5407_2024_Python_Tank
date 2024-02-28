@@ -121,7 +121,7 @@ class robot(wpilib.TimedRobot):
         #self.PIDArmMotor.setReference(self.TargetPosition, )
         self.PickAndFiringArmMotor.set(self.XboxRightJoyStickY) 
 #Intake
-        if self.XboxBButton == True:
+        if self.XboxBButton == True or self.XboxAButton == True:
             self.PickupMechansimMotor.set(self.SuckerSpeed)
         else:
             self.PickupMechansimMotor.set(0) 
