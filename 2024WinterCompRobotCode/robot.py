@@ -39,19 +39,22 @@ class robot(wpilib.TimedRobot):
         self.PickAndFiringArmMotor = rev.CANSparkMax(PickupAndFiringArmMotorPort, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
         self.ShootingMechansimMotor1 = rev.CANSparkMax(ShootingMechansimMotorPort1, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
         self.ShootingMechansimMotor2 = rev.CANSparkMax(ShootingMechansimMotorPort2, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
-        #self.Endcoder = self.PickAndFiringArmMotor.getEncoder(rev.SparkMaxRelativeEncoder.EncoderType.kQuadrature, 42)
+        #self.Encoder = self.PickAndFiringArmMotor.getEncoder( rev._rev.SparkMaxRelativeEncoder.Type.kHallSensor, 42)
         #self.PIDArmMotor = self.PickAndFiringArmMotor.getPIDController()
         self.drive = wpilib.drive.DifferentialDrive(self.DriveLeftMotorControlGroup, self.DriveRightMotorControlGroup)
 #Xbox Controlers
         self.Controler = wpilib.XboxController(XboxControlerPort)
 #Extra Components / Variables
-        self.TurnRatio = 1
+        self.DriveRatio = 1/2
+        self.TurnRatio = 2/3
         self.ShooterToggle = 0
         self.ShooterSpeed = 0
-        self.SuckerToggle = -1
-        self.SuckerSpeed = 1
+        self.SuckerToggle = 0
+        self.SuckerSpeed = 0
         self.SuckerToggleRatio = 1/8
         self.ShooterRatio = 3/4
+        self.ArmSpeed = 0
+        self.ArmRatio = 1/6
         self.CrossUp = 0
         self.CrossLeft = 270
         self.CrossRight = 90
@@ -61,9 +64,9 @@ class robot(wpilib.TimedRobot):
         #self.PIDArmMotor.setP(self.kP)
         #self.PIDArmMotor.setI(self.kI)
         #self.PIDArmMotor.setD(self.kD)
-        self.TargetPosition = 1000
-        #rev.SparkMaxRelativeEncoder.setPositionConversionFactor(self.Endcoder, 1.0)
-        #rev.SparkMaxRelativeEncoder.setVelocityConversionFactor(self.Endcoder, 1.0)
+        #self.TargetPosition = 1000
+        #rev.SparkMaxRelativeEncoder.setPositionConversionFactor(self.Encoder, 1.0)
+        #rev.SparkMaxRelativeEncoder.setVelocityConversionFactor(self.Encoder, 1.0)
         # self.GrabChainState = False
         # self.CarryingNote = False
         # self.StableNote = False
@@ -83,6 +86,7 @@ class robot(wpilib.TimedRobot):
         #self.ShootLimSwitch5 = wpilib.DigitalInput(LimitSwitchPort5)
         #self.ShootLimSwitch6 = wpilib.DigitalInput(LimitSwitchPort6)
 #Xbox Controls
+        self.XboxCross = self.Controler.getPOV()
         self.XboxRightBumperPressed = self.Controler.getRightBumperPressed()
         self.XboxBButtonPressed = self.Controler.getBButtonPressed()
         self.XboxBButton = self.Controler.getBButton()
@@ -90,7 +94,6 @@ class robot(wpilib.TimedRobot):
         self.XboxAButton = self.Controler.getAButton()
         self.XboxLeftJoyStickY = self.Controler.getLeftY()
         self.XboxLeftJoyStickX = self.Controler.getLeftX()
-        self.XboxCrossLeft = self.Controler.getPOV()
         self.XboxRightJoyStickY = self.Controler.getRightY()
 #Toggles with Speed Calculations
         if self.XboxRightBumperPressed == True and self.ShooterToggle == 1:
@@ -101,30 +104,33 @@ class robot(wpilib.TimedRobot):
             self.ShooterSpeed = self.ShooterToggle * self.ShooterRatio
         if self.XboxBButtonPressed == True and self.SuckerToggle == 0:
             self.SuckerToggle = 1
-            self.SuckSpeed = self.SuckerToggle * self.SuckerToggleRatio
-        elif self.XboxBButtonPressed == True and self.SuckerToggle == 1:
+            self.SuckerSpeed = self.SuckerToggle * self.SuckerToggleRatio
+        elif self.XboxBButtonPressed == True and self.SuckerToggle == 1 or self.XboxBButtonPressed == True and self.SuckerToggle == -1:
             self.SuckerToggle = 0
-            self.SuckSpeed = self.SuckerToggle * self.SuckerToggleRatio
+            self.SuckerSpeed = self.SuckerToggle * self.SuckerToggleRatio
         if self.XboxAButtonPressed == True and self.SuckerToggle == 0:
             self.SuckerToggle = -1
-            self.SuckSpeed = self.SuckerToggle * self.SuckerToggleRatio
-        elif self.XboxAButtonPressed == True and self.SuckerToggle == -1:
+            self.SuckerSpeed = self.SuckerToggle * self.SuckerToggleRatio
+        elif self.XboxAButtonPressed == True and self.SuckerToggle == 1 or self.XboxAButtonPressed == True and self.SuckerToggle == -1:
             self.SuckerToggle = 0
-            self.SuckSpeed = self.SuckerToggle * self.SuckerToggleRatio
-        print("X ", self.XboxLeftJoyStickX, "Y ", self.XboxLeftJoyStickY, "Right Bumper ", self.XboxRightBumperPressed, "B Button Pressed ", self.XboxBButtonPressed, "B Button ", self.XboxBButton)#, "Lim Switches 1, 2 ", self.NoteLimSwitch1, self.NoteLimSwitch2)#, "Encoder Position ", rev.RelativeEncoder.getPosition(self.Endcoder))
+            self.SuckerSpeed = self.SuckerToggle * self.SuckerToggleRatio
+        if self.XboxCross == self.CrossLeft:
+            self.ArmSpeed = 1 * self.ArmRatio
+        elif self.XboxCross == self.CrossRight:
+            self.ArmSpeed = -1 * self.ArmRatio
+        else:
+            self.ArmSpeed = 0 * self.ArmRatio
+        print("X ", self.XboxLeftJoyStickX, "Y ", self.XboxLeftJoyStickY, "Right Bumper ", self.XboxRightBumperPressed, "B Button Pressed ", self.XboxBButtonPressed, "B Button ", self.XboxBButton, "Sucker Toggle ", self.SuckerToggle)#, "Lim Switches 1, 2 ", self.NoteLimSwitch1.get(), self.NoteLimSwitch2.get())#, "Encoder Position ", rev.RelativeEncoder.getPosition(self.Encoder))
 #Drive
-        self.drive.tankDrive(-self.XboxLeftJoyStickY - self.XboxLeftJoyStickX, self.XboxLeftJoyStickY - self.XboxLeftJoyStickX, True)
+        self.drive.tankDrive(-self.XboxLeftJoyStickY * self.DriveRatio - self.XboxLeftJoyStickX * self.TurnRatio, self.XboxLeftJoyStickY * self.DriveRatio - self.XboxLeftJoyStickX * self.TurnRatio, True)
 #Shooting
         self.ShootingMechansimMotor1.set(self.ShooterSpeed)
         self.ShootingMechansimMotor2.set(-self.ShooterSpeed) 
 #Arm
         #self.PIDArmMotor.setReference(self.TargetPosition, )
-        self.PickAndFiringArmMotor.set(self.XboxRightJoyStickY) 
+        self.PickAndFiringArmMotor.set(self.ArmSpeed) 
 #Intake
-        if self.XboxBButton == True or self.XboxAButton == True:
-            self.PickupMechansimMotor.set(self.SuckerSpeed)
-        else:
-            self.PickupMechansimMotor.set(0) 
+        self.PickupMechansimMotor.set(self.SuckerSpeed)
 #Chain Grab
 #         if self.XboxRightBumper == True and self.XboxLeftBumper == True:
 #             self.GrabChainState = True
@@ -161,5 +167,4 @@ class robot(wpilib.TimedRobot):
 #             self.ShootingMechansimMotorControlGroup.set(self.XboxRightTrigger)
 if __name__ == "__main__":
     wpilib.run(robot)
-
 
