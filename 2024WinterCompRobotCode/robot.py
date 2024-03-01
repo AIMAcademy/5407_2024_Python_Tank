@@ -79,12 +79,12 @@ class robot(wpilib.TimedRobot):
 
     def teleopPeriodic(self):
 #Limit Switches
-        #self.NoteLimSwitch1 = wpilib.DigitalInput(LimitSwitchPort1)
-        #self.NoteLimSwitch2 = wpilib.DigitalInput(LimitSwitchPort2)
-        #self.PickupLimSwitch3 = wpilib.DigitalInput(LimitSwitchPort3)
-        #self.PickupLimSwitch4 = wpilib.DigitalInput(LimitSwitchPort4)
-        #self.ShootLimSwitch5 = wpilib.DigitalInput(LimitSwitchPort5)
-        #self.ShootLimSwitch6 = wpilib.DigitalInput(LimitSwitchPort6)
+        self.NoteLimSwitch1 = wpilib.DigitalInput.get(LimitSwitchPort1)
+        self.NoteLimSwitch2 = wpilib.DigitalInput.get(LimitSwitchPort2)
+        self.PickupLimSwitch3 = wpilib.DigitalInput.get(LimitSwitchPort3)
+        self.PickupLimSwitch4 = wpilib.DigitalInput.get(LimitSwitchPort4)
+        self.ShootLimSwitch5 = wpilib.DigitalInput.get(LimitSwitchPort5)
+        self.ShootLimSwitch6 = wpilib.DigitalInput.get(LimitSwitchPort6)
 #Xbox Controls
         self.XboxCross = self.Controler.getPOV()
         self.XboxRightBumperPressed = self.Controler.getRightBumperPressed()
@@ -108,19 +108,23 @@ class robot(wpilib.TimedRobot):
         elif self.XboxBButtonPressed == True and self.SuckerToggle == 1 or self.XboxBButtonPressed == True and self.SuckerToggle == -1:
             self.SuckerToggle = 0
             self.SuckerSpeed = self.SuckerToggle * self.SuckerToggleRatio
-        if self.XboxAButtonPressed == True and self.SuckerToggle == 0:
+        if self.XboxAButtonPressed == True and self.SuckerToggle == 0 and (self.NoteLimSwitch1 or self.NoteLimSwitch2 == True):
             self.SuckerToggle = -1
             self.SuckerSpeed = self.SuckerToggle * self.SuckerToggleRatio
         elif self.XboxAButtonPressed == True and self.SuckerToggle == 1 or self.XboxAButtonPressed == True and self.SuckerToggle == -1:
             self.SuckerToggle = 0
             self.SuckerSpeed = self.SuckerToggle * self.SuckerToggleRatio
-        if self.XboxCross == self.CrossLeft:
+        """if self.XboxCross == self.CrossLeft:
             self.ArmSpeed = 1 * self.ArmRatio
         elif self.XboxCross == self.CrossRight:
             self.ArmSpeed = -1 * self.ArmRatio
         else:
-            self.ArmSpeed = 0 * self.ArmRatio
+            self.ArmSpeed = 0 * self.ArmRatio"""
+            # uncomment the above code if test fails
+            # Is this else function necessary? -TC
+        
         print("X ", self.XboxLeftJoyStickX, "Y ", self.XboxLeftJoyStickY, "Right Bumper ", self.XboxRightBumperPressed, "B Button Pressed ", self.XboxBButtonPressed, "B Button ", self.XboxBButton, "Sucker Toggle ", self.SuckerToggle)#, "Lim Switches 1, 2 ", self.NoteLimSwitch1.get(), self.NoteLimSwitch2.get())#, "Encoder Position ", rev.RelativeEncoder.getPosition(self.Encoder))
+        # Hey, what if we just did while loops instead of this? -TC
 #Drive
         self.drive.tankDrive(-self.XboxLeftJoyStickY * self.DriveRatio - self.XboxLeftJoyStickX * self.TurnRatio, self.XboxLeftJoyStickY * self.DriveRatio - self.XboxLeftJoyStickX * self.TurnRatio, True)
 #Shooting
@@ -128,7 +132,14 @@ class robot(wpilib.TimedRobot):
         self.ShootingMechansimMotor2.set(-self.ShooterSpeed) 
 #Arm
         #self.PIDArmMotor.setReference(self.TargetPosition, )
-        self.PickAndFiringArmMotor.set(self.ArmSpeed) 
+        #self.PickAndFiringArmMotor.set(self.ArmSpeed) 
+
+        if (self.XboxCross == self.CrossRight) and (self.PickupLimSwitch3.get or self.PickupLimSwitch4 == False):
+            -(self.PickAndFiringArmMotor.set(self.ArmSpeed))
+        elif (self.XboxCross == self.CrossLeft) and (self.ShootLimSwitch5 or self.ShootLimSwitch6 == False):
+            self.PickAndFiringArmMotor.set(self.ArmSpeed)
+        
+        # this probably could be done better, I programmed this shit like i'm playing baba is you -TC
 #Intake
         self.PickupMechansimMotor.set(self.SuckerSpeed)
 #Chain Grab
