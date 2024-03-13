@@ -1,0 +1,74 @@
+#2024 Winter Compatition Robot
+
+#imports
+import rev
+import wpilib
+import wpilib.drive
+import wpilib.interfaces
+import wpilib.event
+from wpilib.drive import DifferentialDrive
+from wpilib.shuffleboard import Shuffleboard
+
+#ports
+DriveLeftMotorPort1 = 23
+DriveLeftMotorPort2 = 22
+DriveRightMotorPort1 = 20
+DriveRightMotorPort2 = 21
+XboxControlerPort = 0
+class robot(wpilib.TimedRobot):
+    def robotInit(self):
+
+#Motors + WPILIB drive
+        self.DriveLeftMotor = rev.CANSparkMax(DriveLeftMotorPort1, rev._rev.CANSparkLowLevel.MotorType.kBrushed)
+        self.DriveRightMotor = rev.CANSparkMax(DriveRightMotorPort1, rev._rev.CANSparkLowLevel.MotorType.kBrushed)
+        self.DriveLeftMotor2 = rev.CANSparkMax(DriveLeftMotorPort2, rev._rev.CANSparkLowLevel.MotorType.kBrushed)
+        self.DriveRightMotor2 = rev.CANSparkMax(DriveRightMotorPort2, rev._rev.CANSparkLowLevel.MotorType.kBrushed)
+        self.DriveLeftMotorControlGroup = wpilib.MotorControllerGroup(self.DriveLeftMotor, self.DriveLeftMotor2) 
+        self.DriveRightMotorControlGroup = wpilib.MotorControllerGroup(self.DriveRightMotor, self.DriveRightMotor2)
+        self.Timer = wpilib.Timer()
+        #self.PIDArmMotor = self.PickAndFiringArmMotor.getPIDController()
+        self.drive = wpilib.drive.DifferentialDrive(self.DriveLeftMotorControlGroup, self.DriveRightMotorControlGroup)
+#Xbox Controlers
+        self.Controler = wpilib.XboxController(XboxControlerPort)
+#Extra Components / Variables
+        self.DriveSpeed = 0
+        self.DriveToggle = 0
+        self.DriveRatio = 1/2
+        self.TurnRatio = 2/3
+        self.CrossUp = 0
+        self.CrossLeft = 270
+        self.CrossRight = 90
+        self.AutonomousDriveTime = 2
+    
+    def teleopExit(self):
+
+        self.drive.stopMotor()
+
+    def teleopPeriodic(self):
+#Xbox Controls
+        self.XboxLeftBumperPressed = self.Controler.getLeftBumperPressed()
+        self.XboxLeftJoyStickY = self.Controler.getLeftY()
+        self.XboxLeftJoyStickX = self.Controler.getLeftX()*-1
+#Toggles with Speed Calculations
+        if (self.XboxLeftBumperPressed == True and self.DriveRatio == 1):
+            self.DriveRatio = 1/2
+        elif (self.XboxLeftBumperPressed == True and self.DriveRatio == 1/2):
+            self.DriveRatio = 1
+#Drive
+        self.drive.tankDrive(-self.XboxLeftJoyStickY * self.DriveRatio - self.XboxLeftJoyStickX * (-(self.TurnRatio)), self.XboxLeftJoyStickY * self.DriveRatio - self.XboxLeftJoyStickX * (-(self.TurnRatio)), True)
+
+    def autonomousInit(self):
+       self.Timer.reset()
+       self.Timer.start()
+    def autonomousPeriodic(self):
+        #print(self.Timer.get())
+        if  self.Timer.get() > self.AutonomousDriveTime:
+            self.DriveSpeed = 0
+            self.drive.tankDrive(self.DriveSpeed ,self.DriveSpeed, True)
+            self.Timer.stop()
+        else:
+            self.DriveSpeed = 1 * self.DriveRatio
+            self.drive.tankDrive(self.DriveSpeed, -self.DriveSpeed, True)
+if __name__ == "__main__":
+    wpilib.run(robot)
+
