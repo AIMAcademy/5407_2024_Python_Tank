@@ -61,32 +61,32 @@ class robot(wpilib.TimedRobot):
 #Extra Components / Variables
         self.DriveSpeed = 0
         self.DriveToggle = 0
-        self.DriveRatio = 1/2
-        self.TurnRatio = 2/3
+        self.DriveRatio = 0.5
+        self.TurnRatio = 0.66
         self.ShooterToggle = 0
         self.ShooterSpeed = 0
         self.ShooterRatioLeft = .5
         self.ShooterRatioRight = .5
         self.SuckerToggle = 0
         self.SuckerSpeed = 0
-        self.SuckerToggleRatio = 1/2
+        self.SuckerToggleRatio = 0.5
         self.ArmSpeed = 0
-        self.ArmRatio = 1/6
+        self.ArmRatio = 0.166
         self.CrossUp = 0
         self.CrossLeft = 270
         self.CrossRight = 90
         self.AutonomousDriveTime = 2
-        self.kP = 0.1
-        self.kI = 0.1
-        self.kD = 0.1
-        self.VelocityConbersionFactor = 1.0
-        self.PositionConversionFactor = 1.0
-        self.PIDArmMotor.setP(self.kP)
-        self.PIDArmMotor.setI(self.kI)
-        self.PIDArmMotor.setD(self.kD)
-        self.TargetPosition = 0
-        self.PickAndFiringArmMotorEncoder.setPositionConversionFactor(self.PositionConversionFactor)
-        self.PickAndFiringArmMotorEncoder.setVelocityConversionFactor(self.VelocityConbersionFactor)
+        #self.kP = 0.1
+        #self.kI = 0.1
+        #self.kD = 0.1
+        #self.VelocityConbersionFactor = 1.0
+        #self.PositionConversionFactor = 1.0
+        #self.PIDArmMotor.setP(self.kP)
+        #self.PIDArmMotor.setI(self.kI)
+        #self.PIDArmMotor.setD(self.kD)
+        #self.TargetPosition = 0
+        #self.PickAndFiringArmMotorEncoder.setPositionConversionFactor(self.PositionConversionFactor)
+        #self.PickAndFiringArmMotorEncoder.setVelocityConversionFactor(self.VelocityConbersionFactor)
     def teleopExit(self):
 
         self.drive.stopMotor()
@@ -106,8 +106,8 @@ class robot(wpilib.TimedRobot):
         self.XboxRightJoyStickX = self.Controler.getRightX()
 #Toggles with Speed Calculations
         if (self.XboxLeftBumperPressed == True and self.DriveRatio == 1):
-            self.DriveRatio = 1/2
-        elif (self.XboxLeftBumperPressed == True and self.DriveRatio == 1/2):
+            self.DriveRatio = 0.5
+        elif (self.XboxLeftBumperPressed == True and self.DriveRatio == 0.5):
             self.DriveRatio = 1
         if (self.XboxRightBumperPressed == True and self.ShooterToggle == 1):
             self.ShooterToggle = 0
@@ -147,7 +147,7 @@ class robot(wpilib.TimedRobot):
         self.ShootingMechansimMotorGroupRight.set(-self.ShooterSpeed * self.ShooterRatioRight)
 
 #Arm
-        self.PIDArmMotor.setReference()
+#        self.PIDArmMotor.setReference()
         self.PickAndFiringArmMotor.set(self.ArmSpeed) 
 #Intake
         self.PickupMechansimMotor.set(self.SuckerSpeed)
@@ -172,4 +172,3 @@ class robot(wpilib.TimedRobot):
             self.drive.tankDrive(self.DriveSpeed, -self.DriveSpeed, True)
 if __name__ == "__main__":
     wpilib.run(robot)
-
