@@ -9,6 +9,7 @@ from wpilib.drive import DifferentialDrive
 from wpilib.shuffleboard import Shuffleboard
 
 #ports
+placeholder = 0
 DriveLeftMotorPort1 = 23
 DriveLeftMotorPort2 = 22
 DriveRightMotorPort1 = 20
@@ -19,6 +20,8 @@ ShootingMechansimMotorPortLeftUpper = 2
 ShootingMechansimMotorPortRightUpper = 3
 ShootingMechansimMotorPortLeftLower = 5
 ShootingMechansimMotorPortRightLower = 6
+HangerLeftMotorPort = 9
+HangerRightMotorPort = 10
 LimitSwitchPort1 = 8
 LimitSwitchPort2 = 6
 LimitSwitchPort3 = 5
@@ -52,6 +55,9 @@ class robot(wpilib.TimedRobot):
         self.PickupLimSwitch4 = wpilib.DigitalInput(LimitSwitchPort4)
         self.ShootLimSwitch5 = wpilib.DigitalInput(LimitSwitchPort5)
         self.ShootLimSwitch6 = wpilib.DigitalInput(LimitSwitchPort6)
+        self.HangerLeftMotor = rev.CANSparkMax(HangerLeftMotorPort, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.HangerRightMotor = rev.CANSparkMax(HangerRightMotorPort, rev._rev.CANSparkLowLevel.MotorType.kBrushless)
+        self.HangerMotorGroup = wpilib.MotorControllerGroup(self.HangerLeftMotor, self.HangerRightMotor)
         self.Timer = wpilib.Timer()
         self.PIDArmMotor = self.PickAndFiringArmMotor.getPIDController()
         self.drive = wpilib.drive.DifferentialDrive(self.DriveLeftMotorControlGroup, self.DriveRightMotorControlGroup)
@@ -69,7 +75,7 @@ class robot(wpilib.TimedRobot):
         self.ShooterRatioRight = .5
         self.SuckerToggle = 0
         self.SuckerSpeed = 0
-        self.SuckerToggleRatio = 0.5
+        self.SuckerToggleRatio = 1 #0.5
         self.ArmSpeed = 0
         self.ArmRatio = 0.166
         self.CrossUp = 0
@@ -87,6 +93,12 @@ class robot(wpilib.TimedRobot):
         #self.TargetPosition = 0
         #self.PickAndFiringArmMotorEncoder.setPositionConversionFactor(self.PositionConversionFactor)
         #self.PickAndFiringArmMotorEncoder.setVelocityConversionFactor(self.VelocityConbersionFactor)
+        self.HangerLeftSpeed = 0
+        self.HangerRightSpeed = 0
+        self.HangerCombined = 0
+        self.HangerRatio = 1 #0.2
+        self.HangerRatioLeft = 1 #0.1
+        self.HangerRatioRight = 1 #0.1
     def teleopExit(self):
 
         self.drive.stopMotor()
@@ -104,6 +116,11 @@ class robot(wpilib.TimedRobot):
         self.XboxLeftJoyStickX = self.Controler.getLeftX()
         self.XboxRightJoyStickY = self.Controler.getRightY()
         self.XboxRightJoyStickX = self.Controler.getRightX()
+        self.Xbox2XButton = self.Controler2.getXButton()
+        self.Xbox2YButton = self.Controler2.getYButton()
+        self.Xbox2RightTrigger = self.Controler2.getRightTriggerAxis()
+        self.Xbox2LeftTrigger = self.Controler2.getLeftTriggerAxis()
+        self.Xbox2LeftBumper = self.Controler2.getLeftBumper()
 #Toggles with Speed Calculations
         if (self.XboxLeftBumperPressed == True and self.DriveRatio == 1):
             self.DriveRatio = 0.5
@@ -137,7 +154,20 @@ class robot(wpilib.TimedRobot):
             self.PickupPosition = self.PickAndFiringArmMotorEncoder.getPosition()
         if (self.ShootLimSwitch5.get() == True) or (self.ShootLimSwitch6.get() == True):
             self.ShootPosition = self.PickAndFiringArmMotorEncoder.getPosition()
-        
+        if (self.Xbox2YButton == True):
+            self.HangerCombined = 1 * self.HangerRatio #unsure what direction this moves it at the moment, supposed to go up. also, feel free to change speed
+        elif (self.Xbox2XButton == True):
+            self.HangerCombined = -1 * self.HangerRatio
+        else:
+            self.HangerCombined = 0 * self.HangerRatio
+        if (self.Xbox2LeftBumper == True):
+            self.HangerLeftSpeed = -self.Xbox2LeftTrigger * self.HangerRatioLeft
+            self.HangerRightSpeed = -self.Xbox2RightTrigger * self.HangerRatioRight
+        else:
+            self.HangerLeftSpeed = self.Xbox2LeftTrigger * self.HangerRatioLeft
+            self.HangerRightSpeed = self.Xbox2RightTrigger * self.HangerRatioRight
+            #My brother called me "The medicated Terry Davis that this team deserves"
+
         #print("X ", self.XboxLeftJoyStickX, "Y ", self.XboxLeftJoyStickY, "Right Bumper ", self.XboxRightBumperPressed, "B Button Pressed ", self.XboxBButtonPressed, "B Button ", self.XboxBButton, "Sucker Toggle ", self.SuckerToggle, "Lim Switches 1, 2 ", self.NoteLimSwitch1.get(), self.NoteLimSwitch2.get())#, "Encoder Position ", rev.RelativeEncoder.getPosition(self.Encoder))
 
 #Drive
@@ -157,18 +187,42 @@ class robot(wpilib.TimedRobot):
         wpilib.SmartDashboard.putNumber("IntakeEncoder", self.PickAndFiringArmMotorEncoder.getPosition())
 #        if limit:
 #            self.PickAndFiringArmMotorEncoder.setPosition(0)
-       
+        
+#Hanger
+        self.HangerMotorGroup.set(self.HangerCombined)
+        self.HangerLeftMotor.set(self.HangerLeftSpeed)
+        self.HangerRightMotor.set(self.HangerRightSpeed)
     def autonomousInit(self):
        self.Timer.reset()
        self.Timer.start()
     def autonomousPeriodic(self):
         #print(self.Timer.get())
-        if  self.Timer.get() > self.AutonomousDriveTime:
-            self.DriveSpeed = 0
-            self.drive.tankDrive(self.DriveSpeed ,self.DriveSpeed, True)
-            self.Timer.stop()
+        if self.Timer.get() < 2:
+            self.DriveSpeed = 1
         else:
-            self.DriveSpeed = 1 * self.DriveRatio
-            self.drive.tankDrive(self.DriveSpeed, -self.DriveSpeed, True)
+            self.DriveSpeed = 0
+        self.drive.tankDrive(self.DriveSpeed, -self.DriveSpeed)
+            #self.ShooterToggle = 1
+            #self.ShooterSpeed = self.ShooterToggle
+        #elif self.Timer.get() > 2 and self.Timer.get() < 4:
+            #self.ShooterToggle = 1
+            #self.ShooterSpeed = self.ShooterToggle
+            #self.SuckerToggle = 1
+            #self.SuckerSpeed = self.SuckerToggle * self.SuckerToggleRatio
+        #elif self.Timer.get() > 4 and self.Timer.get() < 6:
+        #    self.ShooterToggle = 0
+        #    self.ShooterSpeed = self.ShooterToggle
+        #    self.SuckerSpeed = self.SuckerToggle * self.SuckerToggleRatio
+        #    self.DriveSpeed = -1 * self.DriveRatio
+        #    self.drive.tankDrive(self.DriveSpeed, -self.DriveSpeed, True)
+        #elif self.Timer.get() > 4:
+        #    self.ShooterToggle = 0
+        #    self.SuckerToggle = 0
+        #    self.DriveSpeed = 0
+        #    self.drive.tankDrive(self.DriveSpeed, -self.DriveSpeed, True)
+        #self.PickupMechansimMotor.set(self.SuckerSpeed)
+        #self.ShootingMechansimMotorGroupLeft.set(self.ShooterSpeed * self.ShooterRatioLeft)
+        #self.ShootingMechansimMotorGroupRight.set(-self.ShooterSpeed * self.ShooterRatioRight)
+
 if __name__ == "__main__":
     wpilib.run(robot)
