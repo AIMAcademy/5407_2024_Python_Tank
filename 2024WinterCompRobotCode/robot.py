@@ -82,6 +82,7 @@ class robot(wpilib.TimedRobot):
         self.CrossLeft = 270
         self.CrossRight = 90
         self.AutonomousDriveTime = 2
+        self.TurnSpeed = 0
         #self.kP = 0.1
         #self.kI = 0.1
         #self.kD = 0.1
@@ -99,8 +100,156 @@ class robot(wpilib.TimedRobot):
         self.HangerRatio = 1 #0.2
         self.HangerRatioLeft = 1 #0.1
         self.HangerRatioRight = 1 #0.1
-    def teleopExit(self):
+    def autoMiddle(self):
+        #Shoot note loaded
+        if self.Timer.get() <0.5:
+            self.ShooterSpeed = 1
+        elif self.Timer.get() > 0.5 and self.Timer.get() < 1:
+            self.SuckerSpeed = -1
+        #Drive to next note and suck
+        elif self.Timer.get() > 1 and self.Timer.get() < 1.5:
+            self.ShooterSpeed = 0
+            self.SuckerSpeed = 1
+            self.DriveSpeed = 0.35
+            self.ArmSpeed = -0.3
+        elif self.Timer.get() > 1.5 and self.Timer.get() < 3:
+            self.ShooterSpeed = 0
+            self.SuckerSpeed = 1
+            self.DriveSpeed = 0.35
+            self.ArmSpeed = 0
+        #Drive back to Speaker
+        elif self.Timer.get() > 3 and self.Timer.get() < 4.5:
+            self.DriveSpeed = -0.35
+            self.ArmSpeed = 0.15
+        elif self.Timer.get() > 4.5 and self.Timer.get() < 6:
+            self.DriveSpeed = -0.35
+            self.ArmSpeed = 0
+        #Shoot loaded note
+        elif self.Timer.get() > 6 and self.Timer.get() < 6.5:
+            self.DriveSpeed = 0
+            self.ArmSpeed = 0
+            self.ShooterSpeed = 1
+        elif self.Timer.get() > 6.5 and self.Timer.get() < 7:
+            self.SuckerSpeed = -1
+        #Move past line
+        elif self.Timer.get() > 7 and self.Timer.get() < 10:
+            self.SuckerSpeed = 0
+            self.ShooterSpeed = 0
+            self.DriveSpeed = 0.35
+        else:
+            self.DriveSpeed = 0
+            self.SuckerSpeed = 0
+            self.ShooterSpeed = 0
+            self.ArmSpeed = 0
+            self.TurnSpeed = 0
+        if ((self.NoteLimSwitch1.get() == False or self.NoteLimSwitch2.get() == False) and (self.SuckerSpeed == 1)):
+            self.SuckerSpeed = 0
+        self.drive.tankDrive((-self.DriveSpeed -self.TurnSpeed), (self.DriveSpeed - self.TurnSpeed))
+        self.PickupMechansimMotor.set(self.SuckerSpeed)
+        self.ShootingMechansimMotorGroupLeft.set(self.ShooterSpeed * self.ShooterRatioLeft)
+        self.ShootingMechansimMotorGroupRight.set(-self.ShooterSpeed * self.ShooterRatioRight)
+        self.PickAndFiringArmMotor.set(self.ArmSpeed) 
+    def autoLeft(self):
+        #Shoot note loaded
+        if self.Timer.get() <0.5:
+            self.ShooterSpeed = 1
+        elif self.Timer.get() > 0.5 and self.Timer.get() < 1:
+            self.SuckerSpeed = -1
+        #Drive to next note and suck
+        elif self.Timer.get() > 1 and self.Timer.get() < 1.5:
+            self.ShooterSpeed = 0
+            self.SuckerSpeed = 1
+            self.DriveSpeed = 0.34
+            self.ArmSpeed = -0.3
+        elif self.Timer.get() > 1.5 and self.Timer.get() < 3:
+            self.ShooterSpeed = 0
+            self.SuckerSpeed = 1
+            self.DriveSpeed = 0.34
+            self.ArmSpeed = 0
+        #Drive back to Speaker
+        elif self.Timer.get() > 3 and self.Timer.get() < 4.5:
+            self.DriveSpeed = -0.34
+            self.ArmSpeed = 0.15
+        elif self.Timer.get() > 4.5 and self.Timer.get() < 6:
+            self.DriveSpeed = -0.34
+            self.ArmSpeed = 0
+        #Shoot loaded note
+        elif self.Timer.get() > 6 and self.Timer.get() < 6.5:
+            self.DriveSpeed = 0
+            self.ArmSpeed = 0
+            self.ShooterSpeed = 1
+        elif self.Timer.get() > 6.5 and self.Timer.get() < 7:
+            self.SuckerSpeed = -1
+        #Move past line
+        elif self.Timer.get() > 7 and self.Timer.get() < 10:
+            self.SuckerSpeed = 0
+            self.ShooterSpeed = 0
+            self.DriveSpeed = 0.34
+        else:
+            self.DriveSpeed = 0
+            self.SuckerSpeed = 0
+            self.ShooterSpeed = 0
+            self.ArmSpeed = 0
+            self.TurnSpeed = 0
+        if ((self.NoteLimSwitch1.get() == False or self.NoteLimSwitch2.get() == False) and (self.SuckerSpeed == 1)):
+            self.SuckerSpeed = 0
+        self.drive.tankDrive((-self.DriveSpeed -self.TurnSpeed), (self.DriveSpeed - self.TurnSpeed))
+        self.PickupMechansimMotor.set(self.SuckerSpeed)
+        self.ShootingMechansimMotorGroupLeft.set(self.ShooterSpeed * self.ShooterRatioLeft)
+        self.ShootingMechansimMotorGroupRight.set(-self.ShooterSpeed * self.ShooterRatioRight)
+        self.PickAndFiringArmMotor.set(self.ArmSpeed) 
+    def autoRight(self):
+        #Shoot note loaded
+        if self.Timer.get() <0.5:
+            self.ShooterSpeed = 1
+        elif self.Timer.get() > 0.5 and self.Timer.get() < 1:
+            self.SuckerSpeed = -1
+        #Drive to next note and suck
+        elif self.Timer.get() > 1 and self.Timer.get() < 1.5:
+            self.ShooterSpeed = 0
+            self.SuckerSpeed = 1
+            self.DriveSpeed = 0.35
+            self.ArmSpeed = -0.3
+        elif self.Timer.get() > 1.5 and self.Timer.get() < 3:
+            self.ShooterSpeed = 0
+            self.SuckerSpeed = 1
+            self.DriveSpeed = 0.35
+            self.ArmSpeed = 0
+        #Drive back to Speaker
+        elif self.Timer.get() > 3 and self.Timer.get() < 4.5:
+            self.DriveSpeed = -0.35
+            self.ArmSpeed = 0.15
+        elif self.Timer.get() > 4.5 and self.Timer.get() < 6:
+            self.DriveSpeed = -0.35
+            self.ArmSpeed = 0
+        #Shoot loaded note
+        elif self.Timer.get() > 6 and self.Timer.get() < 6.5:
+            self.DriveSpeed = 0
+            self.ArmSpeed = 0
+            self.ShooterSpeed = 1
+        elif self.Timer.get() > 6.5 and self.Timer.get() < 7:
+            self.SuckerSpeed = -1
+        #Move past line
+        elif self.Timer.get() > 7 and self.Timer.get() < 10:
+            self.SuckerSpeed = 0
+            self.ShooterSpeed = 0
+            self.DriveSpeed = 0.35
+        else:
+            self.DriveSpeed = 0
+            self.SuckerSpeed = 0
+            self.ShooterSpeed = 0
+            self.ArmSpeed = 0
+            self.TurnSpeed = 0
+        if ((self.NoteLimSwitch1.get() == False or self.NoteLimSwitch2.get() == False) and (self.SuckerSpeed == 1)):
+            self.SuckerSpeed = 0
+        self.drive.tankDrive((-self.DriveSpeed -self.TurnSpeed), (self.DriveSpeed - self.TurnSpeed))
+        self.PickupMechansimMotor.set(self.SuckerSpeed)
+        self.ShootingMechansimMotorGroupLeft.set(self.ShooterSpeed * self.ShooterRatioLeft)
+        self.ShootingMechansimMotorGroupRight.set(-self.ShooterSpeed * self.ShooterRatioRight)
+        self.PickAndFiringArmMotor.set(self.ArmSpeed) 
 
+    def teleopExit(self):
+        
         self.drive.stopMotor()
 
     def teleopPeriodic(self):
@@ -195,34 +344,13 @@ class robot(wpilib.TimedRobot):
     def autonomousInit(self):
        self.Timer.reset()
        self.Timer.start()
+       self.ShooterSpeed = 0
+       self.TurnSpeed = 0
+       self.DriveSpeed = 0
+       self.ArmSpeed = 0
+       self.SuckerSpeed = 0
     def autonomousPeriodic(self):
-        #print(self.Timer.get())
-        if self.Timer.get() < 2:
-            self.DriveSpeed = 1
-        else:
-            self.DriveSpeed = 0
-        self.drive.tankDrive(self.DriveSpeed, -self.DriveSpeed)
-            #self.ShooterToggle = 1
-            #self.ShooterSpeed = self.ShooterToggle
-        #elif self.Timer.get() > 2 and self.Timer.get() < 4:
-            #self.ShooterToggle = 1
-            #self.ShooterSpeed = self.ShooterToggle
-            #self.SuckerToggle = 1
-            #self.SuckerSpeed = self.SuckerToggle * self.SuckerToggleRatio
-        #elif self.Timer.get() > 4 and self.Timer.get() < 6:
-        #    self.ShooterToggle = 0
-        #    self.ShooterSpeed = self.ShooterToggle
-        #    self.SuckerSpeed = self.SuckerToggle * self.SuckerToggleRatio
-        #    self.DriveSpeed = -1 * self.DriveRatio
-        #    self.drive.tankDrive(self.DriveSpeed, -self.DriveSpeed, True)
-        #elif self.Timer.get() > 4:
-        #    self.ShooterToggle = 0
-        #    self.SuckerToggle = 0
-        #    self.DriveSpeed = 0
-        #    self.drive.tankDrive(self.DriveSpeed, -self.DriveSpeed, True)
-        #self.PickupMechansimMotor.set(self.SuckerSpeed)
-        #self.ShootingMechansimMotorGroupLeft.set(self.ShooterSpeed * self.ShooterRatioLeft)
-        #self.ShootingMechansimMotorGroupRight.set(-self.ShooterSpeed * self.ShooterRatioRight)
+        self.autoMiddle()
 
 if __name__ == "__main__":
     wpilib.run(robot)
